@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int               @id @default(autoincrement())
+  email           String            @unique
+  passwordHash    String
+  firstName       String?
+  lastName        String?
+  role            Role              @default(USER)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  telegramChatId  String?
+  CommentTasks    CommentTask[]
+  FacebookAccount FacebookAccount[]
+}
+
+model FacebookAccount {
+  id           Int             @id @default(autoincrement())
+  userId       Int
+  name         String
+  fbUserId     String          @unique
+  accessToken  String
+  status       FbAccountStatus @default(ACTIVE)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  adAccounts   AdAccount[]
+  CommentTasks CommentTask[]
+  user         User            @relation(fields: [userId], references: [id])
+  Proxy        Proxy?
+}
+
+model AdAccount {
+  id                Int             @id @default(autoincrement())
+  facebookAccountId Int
+  adAccountId       String          @unique
+  name              String
+  businessId        String?
+  currency          String?
+  timezone          String?
+  country           String?
+  status            AdAccountStatus
+  hasCard           Boolean
+  hasPixel          Boolean
+  notifications     Boolean         @default(false)
+  autoCommenting    Boolean         @default(false)
+  facebookAccount   FacebookAccount @relation(fields: [facebookAccountId], references: [id])
+}
+
+model Proxy {
+  id                Int              @id @default(autoincrement())
+  ip                String
+  port              Int
+  username          String?
+  password          String?
+  status            ProxyStatus      @default(ACTIVE)
+  facebookAccountId Int?             @unique
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  lastChecked       DateTime?
+  facebookAccount   FacebookAccount? @relation(fields: [facebookAccountId], references: [id])
+}
+
+model CommentTask {
+  id                Int           @id @default(autoincrement())
+  userId            Int
+  facebookAccountId Int
+  adAccountId       Int
+  postId            String        @unique
+  postTitle         String?
+  knownCommentIds   String[]      @default([])
+  lastCheckedAt     DateTime?
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  action            CommentAction @default(TRACK)
+  notification      Boolean       @default(false)
+
+  pageAccessToken String?
+
+  facebookAccount FacebookAccount @relation(fields: [facebookAccountId], references: [id])
+  user            User            @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  SUPERADMIN
+  USER
+}
+
+enum ProxyStatus {
+  ACTIVE
+  DEAD
+}
+
+enum FbAccountStatus {
+  ACTIVE
+  CHECKPOINT
+  BANNED
+  INACTIVE
+}
+
+enum AdAccountStatus {
+  ACTIVE
+  GRACE
+  CLOSED
+  BLOCKED
+}
+
+enum CommentAction {
+  DELETE
+  HIDE
+  TRACK
+}
