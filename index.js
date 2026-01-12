@@ -3,8 +3,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
-const facebookAccountsRoutes = require('./routes/facebookAccountsRoutes');
 
+const facebookAccountsRoutes = require('./routes/facebookAccountsRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adAccountsRoutes = require('./routes/adAccountsRoutes');
@@ -38,14 +38,19 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 1222;
-app.listen(PORT, async () => {
-  console.log(`✅ Server started on port ${PORT}`);
 
-  try {
-    await bootstrapSchedule();
-    console.log('⏱ Comment tasks scheduler initialized');
-  } catch (err) {
-    console.error('Scheduler error:', err.message);
-  }
+async function main() {
+  // 1) ініціалізація scheduler/queues
+  await bootstrapSchedule();
+  console.log('⏱ Comment tasks scheduler initialized');
+
+  // 2) старт HTTP сервера
+  app.listen(PORT, '127.0.0.1', () => {
+    console.log(`✅ Server started on http://127.0.0.1:${PORT}`);
+  });
+}
+
+main().catch((err) => {
+  console.error('❌ Failed to start server:', err);
+  process.exit(1);
 });
-
