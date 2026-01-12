@@ -13,7 +13,9 @@ const proxyRoutes = require('./routes/proxyRoutes');
 
 const { errorHandler } = require('./utils/errorHandler');
 
-dotenv.config();
+dotenv.config({
+  path: process.env.NODE_ENV === 'development' ? '.env.dev' : '.env'
+});
 
 const app = express();
 
